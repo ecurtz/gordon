@@ -153,60 +153,109 @@
                             colorData = obj.colorData,
                             width = obj.width,
                             height = obj.height;
-                        if(colorData){
-                            var colorTableSize = obj.colorTableSize || 0,
-                                bpp = (obj.withAlpha ? 4 : 3),
-                                cmIdx = colorTableSize * bpp,
-                                data = (new Gordon.Stream(colorData)).unzip(true),
-                                withAlpha = obj.withAlpha,
-                                pxIdx = 0,
-                                canvas = doc.createElement("canvas"),
-                                ctx = canvas.getContext("2d"),
-                                imgData = ctx.getImageData(0, 0, width, height),
-                                pxData = imgData.data,
-                                pad = colorTableSize ? ((width + 3) & ~3) - width : 0
-                            canvas.width = width;
-                            canvas.height = height;
-                            for(var y = 0; y < height; y++){
-                                for(var x = 0; x < width; x++){
-                                    var idx = (colorTableSize ? data[cmIdx++] : cmIdx) * bpp,
-                                        alpha = withAlpha ? data[cmIdx + 3] : 255;
-                                    if(alpha){
-                                        pxData[pxIdx] = data[idx];
-                                        pxData[pxIdx + 1] = data[idx + 1];
-                                        pxData[pxIdx + 2] = data[idx + 2];
-                                        pxData[pxIdx + 3] = alpha;
-                                    }
-                                    pxIdx += 4;
-                                }
-                                cmIdx += pad;
-                            }
-                            ctx.putImageData(imgData, 0, 0);
-                            var uri = canvas.toDataURL();
-                        }else{
-                            var alphaData = obj.alphaData,
-                                uri = "data:image/jpeg;base64," + btoa(obj.data);
-                            if(alphaData){
-                                var img = new Image(),
-                                    canvas = doc.createElement("canvas"),
-                                    ctx = canvas.getContext("2d"),
-                                    len = width * height,
-                                    data = (new Gordon.Stream(alphaData)).unzip(true);
-                                img.src = uri;
-                                canvas.width = width;
-                                canvas.height = height;
-                                ctx.drawImage(img, 0, 0);
-                                var imgData = ctx.getImageData(0, 0, width, height),
-                                    pxData = imgData.data,
-                                    pxIdx = 0;
-                                for(var i = 0; i < len; i++){
-                                    pxData[pxIdx + 3] = data[i];
-                                    pxIdx += 4;
-                                }
-                                ctx.putImageData(imgData, 0, 0);
-                                uri = canvas.toDataURL();
-                            }
-                        }
+						if(colorData) {
+							var colorTableSize = obj.colorTableSize || 0,
+								withAlpha = obj.withAlpha,
+								bpp = (withAlpha || (obj.format == 5) ? 4 : 3),
+								cmIdx = colorTableSize * bpp,
+								pxIdx = 0,
+								canvas = this.doc.createElement("canvas"),
+								ctx = canvas.getContext("2d"),
+								imgData = ctx.createImageData(width, height),
+								pad = colorTableSize ? ((width + 3) & ~3) - width : 0;
+				
+							canvas.width = width;
+							canvas.height = height;
+				
+							// If colorTableSize, then image is Colormapped
+							// If no colorTableSize, then image is Direct
+				
+							// Without Alpha
+							// (BitmapFormat 3) Colormapped Images are stored RGB, canvas uses RGBA
+							// (BitmapFormat 4) Direct Images 15bit are UB[1] res, UB[5] red, UB[5] green, UB[5] blue
+							// (BitmapFormat 5) Direct Images 24bit are UI8 res, UI8 red, UI8 green, UI8 blue
+				
+							// With Alpha
+							// (BitmapFormat 3) Colormapped Images are stored RGBA, canvas uses RGBA
+							// (BitmapFormat 5) Direct Images 32bit are stored ARGB, canvas uses RGBA
+							if(obj.format == 4) colorData = new Flashbug.BytearrayString(colorData.join(''));
+				
+							for (var y = 0; y < height; y++) {
+								for (var x = 0; x < width; x++) {
+									var idx = (colorTableSize ? colorData[cmIdx++] : cmIdx++) * bpp, r, g, b, a;
+									if(withAlpha) {
+										r = colorTableSize ? colorData[idx] : colorData[idx + 1];
+										g = colorTableSize ? colorData[idx + 1] : colorData[idx + 2];
+										b = colorTableSize ? colorData[idx + 2] : colorData[idx + 3];
+										a = colorTableSize ? colorData[idx + 3] : colorData[idx];
+									} else {
+										if(obj.format == 3) {
+											r = colorData[idx];
+											g = colorData[idx + 1];
+											b = colorData[idx + 2];
+										} else if(obj.format == 4) {
+											// Untested
+											colorData.readUB(1); // Reserved
+											r = colorData.readUB(5);
+											g = colorData.readUB(5);
+											b = colorData.readUB(5);
+										} else if(obj.format == 5) {
+											//colorData[idx]; // Reserved
+											r = colorData[idx + 1];
+											g = colorData[idx + 2];
+											b = colorData[idx + 3];
+										}
+										a = 255;
+									}
+				
+									// BUG: Corrupted color data? (zlib?)
+									// had an image that wasn't the correct data size
+									// colorData.length = 65529
+									// imgData.data.length = 65536
+									// delta 7px
+									if(a) {
+										imgData.data[pxIdx] = r || 0; //R
+										imgData.data[pxIdx + 1] = g || 0; //G
+										imgData.data[pxIdx + 2] = b || 0; //B
+										imgData.data[pxIdx + 3] = a; //A
+									}
+									pxIdx += 4;
+								}
+								cmIdx += pad;
+							}
+				
+							ctx.putImageData(imgData, 0, 0);
+							uri = canvas.toDataURL();
+				
+							param.value.data = atob(uri.split(',')[1]);
+						} else {
+							uri = "data:image/jpeg;base64," + btoa(obj.data);
+				
+							// Moved to the image onload becuase of drawImage blowing up in Firefox
+							/*if (obj.alphaData) {
+								var img = new Image(),
+									canvas = this.doc.createElement("canvas"),
+									ctx = canvas.getContext("2d"),
+									len = width * height,
+									data = obj.alphaData;
+								img.src = uri;
+								canvas.width = width;
+								canvas.height = height;
+				
+								//Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsIDOMCanvasRenderingContext2D.drawImage]
+								ctx.drawImage(img, 0, 0); // <----- 
+				
+								var imgData = ctx.getImageData(0, 0, width, height),
+									pxIdx = 0;
+				
+								for (var i = 0; i < len; i++) {
+									imgData.data[pxIdx + 3] = data[i];
+									pxIdx += 4;
+								}
+								ctx.putImageData(imgData, 0, 0);
+								uri = canvas.toDataURL();
+							}*/
+						}
                         t._setAttributes(node, {href: uri}, NS_XLINK);
                         attrs.width = width;
                         attrs.height = height;
