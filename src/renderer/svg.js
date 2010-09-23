@@ -313,7 +313,7 @@
                                 advances = [],
                                 chars = [];
                                 x = string.x,
-                                y = string.y * -1;
+                                y = string.y;
                             for(var j = 0, entry = entries[0]; entry; entry = entries[++j]){
                                 var str = fromCharCode(codes[entry.index]);
                                 if(' ' != str || chars.length){
@@ -323,9 +323,9 @@
                                 x += entry.advance;
                             }
                             t._setAttributes(txtNode, {
-                                id: 't' + id + '-' + (i + 1),
+                                id: 't' + id + '_' + (i + 1),
                                 "font-family": font.id,
-                                "font-size": string.size * 20,
+                                "font-size": string.size,
                                 x: advances.join(' '),
                                 y: y
                             });
@@ -335,6 +335,7 @@
                             var node = t._createElement('g');
                             node.appendChild(frag);
                         }else{ var node = frag.firstChild; }
+                        attrs.transform = matrix2string(obj.matrix);
                         break;
                 }
                 if(node){
@@ -398,8 +399,8 @@
                                     frag = doc.createDocumentFragment();
                                 for(var i = 0, seg = segments[0]; seg; seg = segments[++i]){
                                     var useNode = frag.appendChild(t._createElement("use"));
-                                    t._setAttributes(useNode, {href: '#s' + objId}, NS_XLINK);
-                                    t._setStyle(useNode, obj.fill, obj.line, cxform);
+                                    t._setAttributes(useNode, {href: '#s'+ objId +'_'+ (i + 1)}, NS_XLINK);
+                                    t._setStyle(useNode, seg.fill, seg.line, cxform);
                                 }
                                 node.appendChild(frag);
                             }else{
@@ -428,7 +429,7 @@
                                 matrix = cloneMatrix(obj.matrix);
                             for(var i = 0; i < numStrings; i++){
                                 var useNode = frag.appendChild(t._createElement("use")),
-                                    id = objId + (numStrings > 1 ? '-' + (i + 1) : ''),
+                                    id = objId + (numStrings > 1 ? '_' + (i + 1) : ''),
                                     string = strings[i];
                                 t._setAttributes(useNode, {href: '#t' + id}, NS_XLINK);
                                 t._setStyle(useNode, string.fill, null, cxform);
@@ -437,7 +438,6 @@
                                 var node = t._createElement('g');
                                 node.appendChild(frag);
                             }else{ var node = frag.firstChild; }
-                            matrix.scaleY *= -1;
                             attrs.transform = matrix2string(matrix);
                             break;
                     }

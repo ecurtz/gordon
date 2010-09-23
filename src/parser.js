@@ -96,7 +96,7 @@
                     var segments = shape.segments = [];
                     for(var i = 0, seg = edges[0]; seg; seg = edges[++i]){ segments.push({
                         type: "shape",
-                        id: id + '-' + (i + 1),
+                        id: id + '_' + (i + 1),
                         commands: edges2cmds(seg.records, !!seg.line),
                         fill: seg.fill,
                         line: seg.line
@@ -147,19 +147,23 @@
                         if(isStraight){
                             var isGeneral = s.readBool();
                             if(isGeneral){
-                                x2 += s.readSB(numBits);
-                                y2 += s.readSB(numBits);
+                                x2 += s.readSBTwips(numBits);
+                                y2 += s.readSBTwips(numBits);
                             }else{
                                 var isVertical = s.readBool();
-                                    if(isVertical){ y2 += s.readSB(numBits); }
-                                    else{ x2 += s.readSB(numBits); }
+                                    if(isVertical){ y2 += s.readSBTwips(numBits); }
+                                    else{ x2 += s.readSBTwips(numBits); }
                                 }
                         }else{
-                            cx = x1 + s.readSB(numBits);
-                            cy = y1 + s.readSB(numBits);
-                            x2 = cx + s.readSB(numBits);
-                            y2 = cy + s.readSB(numBits);
+                            cx = x1 + s.readSBTwips(numBits);
+                            cy = y1 + s.readSBTwips(numBits);
+                            x2 = cx + s.readSBTwips(numBits);
+                            y2 = cy + s.readSBTwips(numBits);
+                        	cx = Math.round(cx * 100) / 100;
+                        	cy = Math.round(cy * 100) / 100;
                         }
+                        x2 = Math.round(x2 * 100) / 100;
+                        y2 = Math.round(y2 * 100) / 100;
                         seg.push({
                             i: i++,
                             f: isFirst,
@@ -203,8 +207,8 @@
                         if(flags){
                             if(flags & c.MOVE_TO){
                                 var numBits = s.readUB(5);
-                                x2 = s.readSB(numBits);
-                                y2 = s.readSB(numBits);
+                                x2 = s.readSBTwips(numBits);
+                                y2 = s.readSBTwips(numBits);
                             }
                             if(flags & c.LEFT_FILL_STYLE){
                                 leftFill = s.readUB(numFillBits);
@@ -332,8 +336,8 @@
                             break;
                         case f.LINEAR_GRADIENT:
                         case f.RADIAL_GRADIENT:
-                            if(morph){ var matrix = [nlizeMatrix(s.readMatrix()), nlizeMatrix(s.readMatrix())]; }
-                            else{ var matrix = nlizeMatrix(s.readMatrix()); }
+                            if(morph){ var matrix = [s.readMatrix(), s.readMatrix()]; }
+                            else{ var matrix = s.readMatrix(); }
                             var stops = [],
                                 style = {
                                     type: type == f.LINEAR_GRADIENT ? "linear" : "radial",
@@ -377,10 +381,10 @@
                     styles = [];
                 if(0xff == numStyles){ numStyles = s.readUI16(); }
                 while(numStyles--){
-                    var width = s.readUI16(),
+                    var width = s.readUI16Twips(),
                         color = withAlpha || morph ? s.readRGBA() : s.readRGB()
                     styles.push({
-                        width: morph ? [width, s.readUI16()] : width,
+                        width: morph ? [width, s.readUI16Twips()] : width,
                         color: morph ? [color, s.readRGBA()] : color
                     });
                 }
@@ -531,24 +535,24 @@
                         if(isStraight){
                             var isGeneral = s.readBool();
                             if(isGeneral){
-                                x += s.readSB(numBits);
-                                y += s.readSB(numBits);
+                                x += s.readSBTwips(numBits);
+                                y += s.readSBTwips(numBits);
                                 cmds.push('L' + x + ',' + y);
                             }else{
                                 var isVertical = s.readBool();
                                 if(isVertical){
-                                    y += s.readSB(numBits);
+                                    y += s.readSBTwips(numBits);
                                     cmds.push('V' + y);
                                 }else{
-                                    x += s.readSB(numBits);
+                                    x += s.readSBTwips(numBits);
                                     cmds.push('H' + x);
                                 }
                             }
                         }else{
-                            var cx = x + s.readSB(numBits),
-                                cy = y + s.readSB(numBits);
-                            x = cx + s.readSB(numBits);
-                            y = cy + s.readSB(numBits);
+                            var cx = x + s.readSBTwips(numBits),
+                                cy = y + s.readSBTwips(numBits);
+                            x = cx + s.readSBTwips(numBits);
+                            y = cy + s.readSBTwips(numBits);
                             cmds.push('Q' + cx + ',' + cy + ',' + x + ',' + y);
                         }
                     }else{
@@ -556,8 +560,8 @@
                         if(flags){
                             if(flags & c.MOVE_TO){
                                 var numBits = s.readUB(5);
-                                x = s.readSB(numBits);
-                                y = s.readSB(numBits);
+                                x = s.readSBTwips(numBits);
+                                y = s.readSBTwips(numBits);
                                 cmds.push('M' + x + ',' + y);
                             }
                             if(flags & c.LEFT_FILL_STYLE || flags & c.RIGHT_FILL_STYLE){ s.readUB(numFillBits); }
@@ -597,9 +601,9 @@
                                 var f = Gordon.textStyleFlags;
                                 if(flags & f.HAS_FONT){ fontId = s.readUI16(); }
                                 if(flags & f.HAS_COLOR){ fill = withAlpha ? s.readRGBA() : s.readRGB(); }
-                                if(flags & f.HAS_XOFFSET){ x = s.readSI16(); }
-                                if(flags & f.HAS_YOFFSET){ y = s.readSI16(); }
-                                if(flags & f.HAS_FONT){ size = s.readUI16(); }
+                                if(flags & f.HAS_XOFFSET){ x = s.readSI16Twips(); }
+                                if(flags & f.HAS_YOFFSET){ y = s.readSI16Twips(); }
+                                if(flags & f.HAS_FONT){ size = s.readUI16Twips(); }
                             }
                             str = {
                                 font: d[fontId].id,
@@ -615,7 +619,7 @@
                                 entries = str.entries;
                             while(numGlyphs--){
                                 var idx = s.readUB(numGlyphBits),
-                                    adv = s.readSB(numAdvBits);
+                                    adv = s.readSBTwips(numAdvBits);
                                 entries.push({
                                     index: idx,
                                     advance: adv
@@ -866,14 +870,6 @@
                 return this;
             }
         };
-        
-        function nlizeMatrix(matrix){
-            return {
-                scaleX: matrix.scaleX * 20, scaleY: matrix.scaleY * 20,
-                skewX: matrix.skewX * 20, skewY: matrix.skewY * 20,
-                moveX: matrix.moveX, moveY: matrix.moveY
-            };
-        }
         
         function cloneEdge(edge){
             return {

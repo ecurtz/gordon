@@ -56,6 +56,10 @@
             return this.readSNumber(2, bigEnd);
         },
         
+        readSI16Twips: function(bigEnd){
+            return this.readSI16(bigEnd) / 20;
+        },
+        
         readSI32: function(bigEnd){
             return this.readSNumber(4, bigEnd);
         },
@@ -66,6 +70,10 @@
         
         readUI16: function(bigEnd){
             return this.readNumber(2, bigEnd);
+        },
+        
+        readUI16Twips: function(bigEnd){
+            return this.readUI16(bigEnd) / 20;
         },
         
         readUI24: function(bigEnd){
@@ -175,6 +183,16 @@
             return val;
         },
         
+        readSBTwips: function(numBits){
+            var val = this.readSB(numBits) / 20;
+            return val;
+        },
+        
+        readUBTwips: function(numBits){
+            var val = this.readUB(numBits) / 20;
+            return val;
+        },
+        
         readFB: function(numBits){
             return this._readFixedPoint(numBits, 16);
         },
@@ -244,10 +262,10 @@
             var t = this;
                 numBits = t.readUB(5),
                 rect = {
-                    left: t.readSB(numBits),
-                    right: t.readSB(numBits),
-                    top: t.readSB(numBits),
-                    bottom: t.readSB(numBits)
+                    left: t.readSBTwips(numBits),
+                    right: t.readSBTwips(numBits),
+                    top: t.readSBTwips(numBits),
+                    bottom: t.readSBTwips(numBits)
                 };
             t.align();
             return rect;
@@ -271,7 +289,7 @@
                 matrix = {
                     scaleX: scaleX, scaleY: scaleY,
                     skewX: skewX, skewY: skewY,
-                    moveX: t.readSB(numBits), moveY: t.readSB(numBits)
+                    moveX: t.readSBTwips(numBits), moveY: t.readSBTwips(numBits)
                 };
             t.align();
             return matrix;

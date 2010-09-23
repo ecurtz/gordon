@@ -41,8 +41,8 @@
                         r = t.renderer = t.renderer || Gordon.SvgRenderer,
                         id = t.id;
                     if(!(t.width && t.height)){
-                        t.width = (f.right - f.left) / 20;
-                        t.height = (f.bottom - f.top) / 20;
+                        t.width = (f.right - f.left);
+                        t.height = (f.bottom - f.top);
                     };
                     t._renderer = new r(t.width, t.height, f, t.quality, t.scale, t.bgcolor);
                     t.totalFrames = t._frameCount;
