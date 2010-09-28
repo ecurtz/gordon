@@ -670,6 +670,7 @@
                         id: id,
                         width: s.readUI16(),
                         height: s.readUI16(),
+                        format: format,
                         withAlpha: withAlpha
                     };
                 if(format == Gordon.bitmapFormats.COLORMAPPED){ img.colorTableSize = s.readUI8() + 1; }
@@ -757,8 +758,10 @@
                     c = Gordon.controlTags,
                     timeline = [],
                     sprite = {
+                        type: "sprite",
                         id: id,
-                        timeline: timeline
+                        timeline: timeline,
+                        totalFrames: frameCount
                     },
                     t = this;
                 do{
@@ -775,7 +778,7 @@
                         var offset = s.offset;
                         if(code){
                             if(code == f){
-                                timeline.push(c);
+                                timeline.push(frm);
                                 break;
                             }
                             if(c[code] && t[handl]){ t[handl](s, offset, len, frm); }

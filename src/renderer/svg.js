@@ -153,13 +153,13 @@
                             colorData = obj.colorData,
                             width = obj.width,
                             height = obj.height;
-						if(colorData) {
+						if(colorData){
 							var colorTableSize = obj.colorTableSize || 0,
 								withAlpha = obj.withAlpha,
-								bpp = (withAlpha || (obj.format == 5) ? 4 : 3),
+								bpp = ((withAlpha || (obj.format == 5)) ? 4 : 3),
 								cmIdx = colorTableSize * bpp,
 								pxIdx = 0,
-								canvas = this.doc.createElement("canvas"),
+                                canvas = doc.createElement("canvas"),
 								ctx = canvas.getContext("2d"),
 								imgData = ctx.createImageData(width, height),
 								pad = colorTableSize ? ((width + 3) & ~3) - width : 0;
@@ -226,13 +226,11 @@
 				
 							ctx.putImageData(imgData, 0, 0);
 							uri = canvas.toDataURL();
-				
-							param.value.data = atob(uri.split(',')[1]);
 						} else {
 							uri = "data:image/jpeg;base64," + btoa(obj.data);
 				
 							// Moved to the image onload becuase of drawImage blowing up in Firefox
-							/*if (obj.alphaData) {
+							if (obj.alphaData) {
 								var img = new Image(),
 									canvas = this.doc.createElement("canvas"),
 									ctx = canvas.getContext("2d"),
@@ -254,7 +252,7 @@
 								}
 								ctx.putImageData(imgData, 0, 0);
 								uri = canvas.toDataURL();
-							}*/
+							}
 						}
                         t._setAttributes(node, {href: uri}, NS_XLINK);
                         attrs.width = width;
@@ -473,7 +471,7 @@
                 var color = cxform ? transformColor(line.color, cxform) : line.color,
                     alpha = color.alpha;
                 attrs.stroke = color2string(color);
-                attrs["stroke-width"] = max(line.width, 20);
+                attrs["stroke-width"] = max(line.width, 0.5);
                 if(undefined != alpha && alpha < 1){ attr["stroke-opacity"] = alpha; }
             }
             t._setAttributes(node, attrs);
