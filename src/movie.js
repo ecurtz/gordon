@@ -32,8 +32,6 @@
             l = t._timeline = [];
         t._changeReadyState(s.LOADING);
         new Gordon.Parser((/^\w:\/\//.test(url) ? '' : LOCATION_DIRNAME) + url, function(obj){
-            var action = obj.action;
-            if(action){ eval("obj.action = function(){ " + action + "; }"); }
             switch(obj.type){
                 case "header":
                     for(var prop in obj){ t['_' + prop] = obj[prop]; }
@@ -132,7 +130,10 @@
                         action = frm.action;
                     r.show(idx);
                     t.currentLabel = frm.lbl;
-                    if(action){ action.call(this); }
+					if(action){
+						var actionFunc = new Function("t", action);
+						actionFunc(this);
+					}
                 }
             }
             return t;
