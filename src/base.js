@@ -97,6 +97,8 @@ Gordon = {
         DEFINE_BITS_JPEG4: 90,
         DEFINE_FONT4: 91
     },
+	/* controlTags: [END, SHOW_FRAME, PLACE_OBJECT, REMOVE_OBJECT, START_SOUND, SOUND_STREAM_HEAD,
+		SOUND_STREAM_BLOCK, PLACE_OBJECT2, REMOVE_OBJECT2, FRAME_LABEL, SOUND_STREAM_HEAD2] */
     controlTags: [0, 1, 4, 5, 15, 18, 19, 26, 28, 43, 45],
     tagNames: {},
     tagHandlers: {},

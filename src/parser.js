@@ -488,8 +488,57 @@
             },
             
             _readAction: function(s, offset, len){
-                s.seek(len - (s.offset - offset));
-                return '';
+                var stack = [];
+                do{
+                    var frame, label, skipCount, url, target, escaped;
+                    var code = s.readUI8(),
+                        len = code > 0x80 ? s.readUI16() : 0,
+                        a = Gordon.actionCodes;
+                    switch(code){
+                        case a.PLAY:
+                            stack.push("t.play()");
+                            break;
+                        case a.STOP:
+                            stack.push("t.stop()");
+                            break;
+                        case a.NEXT_FRAME:
+                            stack.push("t.next()");
+                            break;
+                        case a.PREVIOUS_FRAME:
+                            stack.push("t.prev()");
+                            break;
+                        case a.GOTO_FRAME:
+                            frame = s.readUI16();
+                            stack.push("t.goTo(" + frame + ')');
+                            break;
+                        case a.GOTO_LABEL:
+                            label = s.readString();
+                            escaped = label.replace(/'/g, "\\'");
+                            stack.push("t.goToLabel('" + escaped + "')")
+                            break;
+                        case a.GET_URL:
+                            url = s.readString();
+                            target = s.readString();
+                            var escapedUrl = url.replace(/'/g, "\\'");
+                            var escapedTarget = target.replace(/'/g, "\\'");
+                            stack.push("t.getURL('" + url + "', '" + target + "')");
+                            break;
+                        case a.TOGGLE_QUALITY:
+                            stack.push("t.toggleQuality()");
+                            break;
+                        case a.STOP_SOUNDS:
+                            stack.push("t.stopSounds()");
+                            break;
+                        case a.WAIT_FOR_FRAME:
+                            frame = s.readUI16();
+                            skipCount = s.readUI8();
+                            stack.push("t.waitForFrame(" + frame + ", " + skipCount + ")");
+                            break;
+                        default:
+                            s.seek(len);
+                    }
+                }while(code);
+                return stack.join(';') + ';';
             },
             
             _handleJpegTables: function(s, offset, len){
@@ -781,7 +830,7 @@
                                 timeline.push(frm);
                                 break;
                             }
-                            if(c[code] && t[handl]){ t[handl](s, offset, len, frm); }
+                            if((c.indexOf(code) != -1) && t[handl]){ t[handl](s, offset, len, frm); }
                             else{ s.seek(len); }
                         }
                     }while(code);

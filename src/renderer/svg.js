@@ -130,8 +130,8 @@
                         var segments = obj.segments,
                             fill = obj.fill;
                         if(segments){
-                            var node = t._createElement('g'),
-                                frag = doc.createDocumentFragment();
+                            node = t._createElement('g');
+                            var frag = doc.createDocumentFragment();
                             for(var i = 0, seg = segments[0]; seg; seg = segments[++i]){
                                 var segNode = frag.appendChild(t._createElement("path"));
                                 t._setAttributes(segNode, {id: 's' + seg.id, d: seg.commands});
@@ -139,20 +139,21 @@
                             node.appendChild(frag);
                         }else{
                             if(fill && "pattern" == fill.type && !fill.repeat){
-                                var node = t._createElement("use");
-                                t._setAttributes(node, {href: "#" + fill.image.id}, NS_XLINK);
+                                node = t._createElement("use");
+                                t._setAttributes(node, {href: "#i" + fill.image.id}, NS_XLINK);
                                 attrs.transform = matrix2string(fill.matrix);
                             }else{
-                                var node = t._createElement("path");
+                                node = t._createElement("path");
                                 attrs.d = obj.commands;
                             }
                         }
                         break;
                     case "image":
-                        var node = t._createElement("image"),
-                            colorData = obj.colorData,
+                        node = t._createElement("image");
+                        var colorData = obj.colorData,
                             width = obj.width,
-                            height = obj.height;
+                            height = obj.height,
+                            uri = null;
 						if(colorData){
 							var colorTableSize = obj.colorTableSize || 0,
 								withAlpha = obj.withAlpha,
@@ -232,7 +233,7 @@
 							// Moved to the image onload becuase of drawImage blowing up in Firefox
 							if (obj.alphaData) {
 								var img = new Image(),
-									canvas = this.doc.createElement("canvas"),
+									canvas = doc.createElement("canvas"),
 									ctx = canvas.getContext("2d"),
 									len = width * height,
 									data = obj.alphaData;
@@ -261,8 +262,8 @@
                     case "font":
                         var info = obj.info;
                         if(info){
-                            var node = t._createElement("font"),
-                                faceNode = node.appendChild(t._createElement("font-face")),
+                            node = t._createElement("font");
+                            var faceNode = node.appendChild(t._createElement("font-face")),
                                 advanceTable = info.advanceTable
                                 glyphs = obj.glyphs,
                                 codes = info.codes,
@@ -330,9 +331,9 @@
                             txtNode.appendChild(doc.createTextNode(chars.join('')));
                         }
                         if(strings.length > 1){
-                            var node = t._createElement('g');
+                            node = t._createElement('g');
                             node.appendChild(frag);
-                        }else{ var node = frag.firstChild; }
+                        }else{ node = frag.firstChild; }
                         attrs.transform = matrix2string(obj.matrix);
                         break;
                 }
@@ -393,8 +394,8 @@
                         case "shape":
                             var segments = obj.segments;
                             if(segments){
-                                var node = t._createElement('g'),
-                                    frag = doc.createDocumentFragment();
+                                node = t._createElement('g');
+                                var frag = doc.createDocumentFragment();
                                 for(var i = 0, seg = segments[0]; seg; seg = segments[++i]){
                                     var useNode = frag.appendChild(t._createElement("use"));
                                     t._setAttributes(useNode, {href: '#s'+ objId +'_'+ (i + 1)}, NS_XLINK);
@@ -402,7 +403,7 @@
                                 }
                                 node.appendChild(frag);
                             }else{
-                                var node = t._createElement("use");
+                                node = t._createElement("use");
                                 t._setAttributes(node, {href: '#s' + objId}, NS_XLINK);
                                 t._setStyle(node, obj.fill, obj.line, cxform);
                             }
@@ -433,7 +434,7 @@
                                 t._setStyle(useNode, string.fill, null, cxform);
                             }
                             if(strings.length > 1){
-                                var node = t._createElement('g');
+                                node = t._createElement('g');
                                 node.appendChild(frag);
                             }else{ var node = frag.firstChild; }
                             attrs.transform = matrix2string(matrix);
@@ -492,8 +493,8 @@
                 switch(type){
                     case "linear":
                     case "radial":
-                        var node = t._createElement(type + "Gradient"),
-                            s = Gordon.spreadModes,
+                        node = t._createElement(type + "Gradient");
+                        var s = Gordon.spreadModes,
                             i = Gordon.interpolationModes,
                             stops = fill.stops;
                         attrs.gradientUnits = "userSpaceOnUse";
@@ -525,8 +526,8 @@
                         });
                         break;
                     case "pattern":
-                        var node = t._createElement("pattern"),
-                            fillImg = fill.image,
+                        node = t._createElement("pattern");
+                        var fillImg = fill.image,
                             width = fillImg.width,
                             height = fillImg.height;
                         if(cxform){
